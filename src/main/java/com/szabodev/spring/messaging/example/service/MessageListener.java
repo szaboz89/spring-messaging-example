@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Component
@@ -43,5 +44,19 @@ public class MessageListener {
                 System.out.println("MessageListener - Cannot convert to object: " + textMessage.getText());
             }
         }
+    }
+
+    @JmsListener(destination = JmsConfig.SEND_RECEIVE_QUEUE)
+    public void listenAndReply(@Payload ExampleMessageDTO exampleMessage,
+                               Message message) throws JMSException {
+        System.out.println("MessageListener - Receiving message 3");
+        System.out.println("MessageListener - ExampleMessage using @Payload: " + exampleMessage);
+        ExampleMessageDTO replyMessage = ExampleMessageDTO
+                .builder()
+                .id(UUID.randomUUID())
+                .message(exampleMessage.getMessage() + " <- Received")
+                .build();
+        System.out.println("MessageListener - Sending reply: " + replyMessage);
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), replyMessage);
     }
 }
